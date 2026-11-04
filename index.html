@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>1 Hour of Silence Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--or1:#e8913f;--or2:#d6a243;--navy:#262a72;--cream:#d9d2c9;--pill:#e6ddd0;--red:#d63a1f;--ink:#252a77;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:20px 12px;font-family:Rubik,system-ui,-apple-system,"Segoe UI",sans-serif;background:repeating-linear-gradient(100deg,#5b1c1c 0 14px,#4e1717 14px 28px);color:#fff}
+.wrap{width:100%;max-width:680px}
+.panel{border-radius:22px;overflow:hidden;box-shadow:0 8px 30px #0008}
+.top{display:flex;align-items:center;gap:12px;padding:14px 18px;background:linear-gradient(90deg,var(--or1),var(--or2));border-bottom:2px solid #e58a3a}
+.top h1{margin:0;font-size:1.8rem;font-weight:500;flex:1;padding-left:14px;border-left:2px solid #e0753a}
+.ghost{background:transparent;border:2px solid #f6e6c8;color:#fff;border-radius:12px;padding:8px 16px;font:inherit;font-size:1.05rem;cursor:pointer}
+.tabs{display:flex;gap:8px;padding:10px 14px;background:#e0a147;overflow-x:auto;border-bottom:2px solid #d7863a}
+.pill{flex:none;border:0;background:var(--pill);color:var(--ink);border-radius:12px;padding:9px 18px;font:inherit;font-size:1.1rem;cursor:pointer;box-shadow:0 1px 0 #0002}
+.pill.on{background:var(--red);color:#fff}
+.ban{background:linear-gradient(110deg,#2a2f80,#1b1d52);padding:28px 24px 24px}
+.ban h2{margin:0;font-size:1.9rem;font-weight:500}
+.ban .h{color:#cfd3ff;font-size:1.1rem;margin:2px 0 12px}
+.ban hr{border:0;border-top:2px solid #d98a3a;margin:0 0 12px;max-width:340px}
+.ban p{margin:0 0 16px;max-width:340px;font-size:1.05rem;line-height:1.3;color:#e8e9ff}
+.cta{display:inline-flex;gap:12px;align-items:center;border:0;border-radius:12px;padding:14px 26px;background:linear-gradient(90deg,#e6672a,#d94a24);color:#fff;font:inherit;font-weight:700;font-size:1.15rem;letter-spacing:.5px;cursor:pointer}
+.cta:disabled{opacity:.6;cursor:wait}
+.body{background:var(--cream);color:var(--ink);padding:18px 24px 22px}
+.body h3{margin:0 0 10px;font-size:1.2rem;font-weight:700;letter-spacing:.5px}
+.ctl{display:flex;gap:12px;align-items:center}
+.ctl input[type=number]{width:96px;padding:9px 10px;border-radius:10px;border:2px solid var(--ink);background:transparent;color:var(--ink);font:inherit;font-size:1.1rem}
+.ctl input[type=range]{flex:1;accent-color:var(--ink)}
+input[type=file]{display:block;margin-top:12px;width:100%;color:var(--ink);font:inherit}
+.note{font-size:.88rem;margin-top:8px;color:#4a4d85}
+progress{width:100%;height:10px;margin-top:14px;accent-color:var(--ink)}
+#out{margin-top:12px;font-size:1rem;line-height:1.4}
+audio{width:100%;margin-top:10px}
+.bar{margin:14px auto 0;display:flex;justify-content:center;gap:10px;padding:10px 14px;border-radius:14px;background:linear-gradient(#e8742c,#d9601c);box-shadow:0 4px 14px #0006}
+.bar button,.bar a{flex:1;max-width:200px;text-align:center;text-decoration:none;border:2px solid transparent;background:transparent;color:#fff;font:inherit;font-size:1.05rem;padding:10px;border-radius:12px;cursor:pointer}
+.bar .on{border-color:#f6e6c8}
+.bar a.off{opacity:.45;pointer-events:none}
+
+.pill,.ghost,.cta,.bar button,.bar a{transition:transform .15s cubic-bezier(.3,1.6,.5,1),filter .15s,box-shadow .15s;-webkit-tap-highlight-color:transparent}
+.pill:hover,.ghost:hover,.cta:hover,.bar button:hover,.bar a:hover{transform:translateY(-2px) scale(1.05);filter:brightness(1.08)}
+.pill:active,.ghost:active,.cta:active,.bar button:active,.bar a:active{transform:scale(.92);filter:brightness(.92)}
+.cta span{display:inline-block;transition:transform .2s}.cta:hover span{transform:translateX(6px)}
+.pill.pop{animation:pop .35s cubic-bezier(.3,1.8,.5,1)}
+@keyframes pop{0%{transform:scale(.85)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+.cta:disabled{animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.04);filter:brightness(1.15)}}
+.rip{position:relative;overflow:hidden}
+.rip i{position:absolute;border-radius:50%;background:#fff6;transform:scale(0);animation:rp .55s ease-out forwards;pointer-events:none}
+@keyframes rp{to{transform:scale(1);opacity:0}}
+.panel{animation:in .5s ease-out}.bar{animation:in .6s .1s ease-out backwards}
+@keyframes in{from{opacity:0;transform:translateY(16px)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+body{background:radial-gradient(1200px 600px at 50% -10%,#7a2a22 0,transparent 60%),repeating-linear-gradient(100deg,#5b1c1c 0 14px,#4e1717 14px 28px)}
+.panel{border:1px solid #ffffff22;box-shadow:0 20px 60px #000a,0 0 0 6px #0003}
+.top{box-shadow:inset 0 -3px 0 #0001}
+.top h1{letter-spacing:.3px;text-shadow:0 2px 0 #0002}
+.tabs{padding:12px 16px;gap:10px;box-shadow:inset 0 3px 6px #0002}
+.pill{padding:9px 20px;font-weight:500;box-shadow:0 3px 0 #b7aa95}
+.pill.on{box-shadow:0 3px 0 #8f2410}
+.ban{position:relative;overflow:hidden;background:radial-gradient(500px 260px at 85% 40%,#4a50c4aa,transparent 70%),linear-gradient(110deg,#2a2f80,#1b1d52)}
+.ban>*:not(.wave){position:relative;z-index:1}
+.ban h2{font-size:2.1rem;font-weight:700;letter-spacing:-.3px}
+.cta{box-shadow:0 4px 0 #9e2f12,0 8px 18px #0005}
+.wave{position:absolute;right:20px;top:0;bottom:0;width:46%;display:flex;align-items:center;gap:5px;opacity:.9}
+.wave b{flex:1;height:6px;border-radius:4px;background:#8c93ff55}
+.wave b.s{background:linear-gradient(#ffd27a,#ff8a3d);animation:spike 2.8s ease-in-out infinite}
+@keyframes spike{0%,70%,100%{height:6px}80%{height:var(--h)}90%{height:calc(var(--h)*.5)}}
+@media (max-width:520px){.wave{opacity:.35;width:70%}}
+.body{background:linear-gradient(#e2dbd1,#d3cbc0)}
+.ctl input[type=number]{background:#fff8;box-shadow:inset 0 2px 4px #0002}
+.ctl input[type=range]{height:6px}
+.file{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;border:2px dashed #7a7fc0;border-radius:12px;padding:12px 14px;background:#fff6;transition:background .15s,transform .15s}
+.file:hover{background:#fffa;transform:translateY(-1px)}
+.file span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1rem}
+.file b{flex:none;background:var(--ink);color:#fff;border-radius:8px;padding:6px 14px;font-weight:500}
+#file{display:none}
+progress{-webkit-appearance:none;appearance:none;border:0;border-radius:8px;background:#b9b2d6;overflow:hidden;height:12px}
+progress::-webkit-progress-bar{background:#b9b2d6}
+progress::-webkit-progress-value{background:linear-gradient(90deg,#e6672a,#f3a23c);border-radius:8px;transition:width .2s}
+progress::-moz-progress-bar{background:linear-gradient(90deg,#e6672a,#f3a23c)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.stats div{background:#fff8;border-radius:12px;padding:10px 8px;text-align:center;box-shadow:0 2px 0 #0001;animation:in .4s ease-out backwards}
+.stats div:nth-child(2){animation-delay:.06s}.stats div:nth-child(3){animation-delay:.12s}.stats div:nth-child(4){animation-delay:.18s}
+.stats small{display:block;font-size:.7rem;color:#5a5d93;text-transform:uppercase;letter-spacing:.5px}
+.stats b{font-size:1.15rem}
+.fm{margin-top:8px;font-size:.85rem;color:#4a4d85;text-align:center}
+@media (max-width:520px){.stats{grid-template-columns:repeat(2,1fr)}}
+.bar{background:linear-gradient(#ee7d33,#d9601c);box-shadow:0 5px 0 #a8430f,0 12px 24px #0006;border-radius:18px}
+
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.chips button{border:2px solid var(--ink);background:transparent;color:var(--ink);border-radius:10px;padding:5px 14px;font:inherit;cursor:pointer;transition:transform .15s,background .15s}
+.chips button:hover{transform:translateY(-2px);background:#fff6}
+.chips button.on{background:var(--ink);color:#fff}
+.cta.busy{animation:pulse 1s ease-in-out infinite;background:linear-gradient(90deg,#6b6fb8,#4a4f9c);box-shadow:0 4px 0 #2b2e70}
+.file.drag{background:#fff;border-color:var(--red);transform:scale(1.02)}
+.shake{animation:shk .4s}
+@keyframes shk{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+#tl{display:block;width:100%;height:44px;margin-top:12px;border-radius:10px;cursor:pointer}
+.hint{font-size:.78rem;color:#5a5d93;text-align:center;margin-top:4px}
+.tabs.q{background:#cf8f3c;padding:10px 16px;box-shadow:inset 0 3px 6px #0002}
+.tabs.q .pill{padding:7px 18px;text-align:center;line-height:1.15;font-size:1rem}
+.tabs.q .pill small{display:block;font-size:.68rem;opacity:.75;font-weight:400}
+.tabs.q .pill.on small{opacity:.95}
+
+[data-fmt=opus]{--sh:#a8430f;--csh:#9e2f12;--line:#e58a3a;--line2:#d7863a;--spk1:#ffd27a;--spk2:#ff8a3d;--tl:#e6672a;--hr:#d98a3a;--bg1:#5b1c1c;--bg2:#4e1717;--glow:#7a2a22;--or1:#e8913f;--or2:#d6a243;--t1:#e0a147;--t2:#cf8f3c;--b1:#2a2f80;--b2:#4a50c4aa;--b3:#1b1d52;--c1:#e6672a;--c2:#d94a24;--bar1:#ee7d33;--bar2:#d9601c;--act:#d63a1f}
+[data-fmt=mp3]{--sh:#126b5e;--csh:#0d5f55;--line:#2b8f84;--line2:#27857a;--spk1:#c9fff0;--spk2:#3de0b8;--tl:#1fa38f;--hr:#4db8a0;--bg1:#0f3a3a;--bg2:#0b3030;--glow:#1c6b64;--or1:#2fa39a;--or2:#4db8a0;--t1:#3fae9b;--t2:#2f9a8a;--b1:#0f4c5c;--b2:#1fa3a888;--b3:#0a2f3a;--c1:#1fa38f;--c2:#15857a;--bar1:#2fb5a0;--bar2:#1f9585;--act:#0f5e57}
+[data-fmt=wav]{--sh:#5d2a8c;--csh:#6b2a90;--line:#8a4fb8;--line2:#7e45a8;--spk1:#f3d0ff;--spk2:#c06ad6;--tl:#9b3fc0;--hr:#c06ad6;--bg1:#2d1745;--bg2:#26123a;--glow:#5a2d8a;--or1:#9b59d0;--or2:#c06ad6;--t1:#b077d8;--t2:#9a62c4;--b1:#3b1d63;--b2:#a35fe088;--b3:#230f3d;--c1:#c05ad6;--c2:#9b3fc0;--bar1:#b06ad8;--bar2:#8f4bc0;--act:#5b2a8c}
+.wrap .top{background:linear-gradient(90deg,var(--or1),var(--or2))}
+.wrap .tabs{background:var(--t1)}
+.wrap .tabs.q{background:var(--t2)}
+.wrap .ban{background:radial-gradient(500px 260px at 85% 40%,var(--b2),transparent 70%),linear-gradient(110deg,var(--b1),var(--b3))}
+.wrap .cta:not(.busy){background:linear-gradient(90deg,var(--c1),var(--c2))}
+.wrap .bar{background:linear-gradient(var(--bar1),var(--bar2))}
+.wrap .pill.on{background:var(--act);box-shadow:0 3px 0 #0005}
+.wrap .top,.wrap .tabs,.wrap .ban,.wrap .bar,.wrap .cta{transition:background .4s}
+.info{display:grid;gap:6px;background:#fff7;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:.92rem;border-left:6px solid var(--or1)}
+.info b{color:var(--ink);margin-right:6px}
+.panel.swap .ban>*:not(.wave),.panel.swap .info{animation:swp .4s ease-out}
+.panel.swap .tabs.q .pill{animation:swp .3s ease-out backwards}
+.panel.swap .tabs.q .pill:nth-child(2){animation-delay:.05s}.panel.swap .tabs.q .pill:nth-child(3){animation-delay:.1s}.panel.swap .tabs.q .pill:nth-child(4){animation-delay:.15s}
+@keyframes swp{from{opacity:.3;transform:translateX(18px)}}
+
+[data-fmt=opus]{--ink:#252a77}[data-fmt=mp3]{--ink:#0f5e57}[data-fmt=wav]{--ink:#4a2a7a}
+.wrap .ctl input[type=range]{accent-color:var(--ink)}
+.wrap progress{accent-color:var(--ink)}
+.wrap .progress::-webkit-progress-value{background:linear-gradient(90deg,var(--c1),var(--or2))}
+.wrap progress::-webkit-progress-value{background:linear-gradient(90deg,var(--c1),var(--or2))}
+.wrap progress::-moz-progress-bar{background:linear-gradient(90deg,var(--c1),var(--or2))}
+.wrap .stats small,.wrap .fm,.wrap .note,.wrap .hint{color:var(--ink);opacity:.75}
+.wrap .file{border-color:var(--ink)}
+.top h1{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(1.15rem,5vw,1.8rem)}
+.ghost{flex:none;white-space:nowrap}
+.pill{white-space:nowrap}
+.chips button{min-width:44px}
+.chips button.on:hover{background:var(--ink)}
+.ban h2{line-height:1.15}
+.bar{flex-wrap:wrap}
+.chips button{position:relative;overflow:hidden;transition:transform .15s cubic-bezier(.3,1.6,.5,1),background .15s,color .15s,box-shadow .15s}
+.chips button:hover{transform:translateY(-2px) scale(1.07);box-shadow:0 4px 0 #0002}
+.chips button:active{transform:scale(.9)}
+.chips button.pop{animation:pop .35s cubic-bezier(.3,1.8,.5,1)}
+body{background:radial-gradient(1200px 600px at 50% -10%,var(--glow,#7a2a22) 0,transparent 60%),repeating-linear-gradient(100deg,var(--bg1,#5b1c1c) 0 14px,var(--bg2,#4e1717) 14px 28px)}
+.wrap .tabs{border-bottom-color:var(--line2)}
+.wrap .top{border-bottom-color:var(--line)}
+.wrap .top h1{border-left-color:var(--line)}
+.wrap .ban hr{border-top-color:var(--hr)}
+.wrap .ban .h{color:#e8f4ff;opacity:.85}
+.wrap .wave b.s{background:linear-gradient(var(--spk1),var(--spk2))}
+.wrap .cta:not(.busy){box-shadow:0 4px 0 var(--csh),0 8px 18px #0005}
+.wrap .bar{box-shadow:0 5px 0 var(--sh),0 12px 24px #0006}
+.wrap .body{background:linear-gradient(color-mix(in srgb,var(--or1) 12%,#e6e0d6),color-mix(in srgb,var(--or1) 18%,#d3cbc0))}
+.wrap progress,.wrap progress::-webkit-progress-bar{background:color-mix(in srgb,var(--ink) 25%,#fff)}
+.top{position:relative}
+.fxmenu{position:absolute;right:14px;top:calc(100% - 6px);z-index:20;background:#fffffff4;border-radius:14px;padding:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;box-shadow:0 12px 30px #0007;min-width:270px;animation:in .2s ease-out}
+.fxmenu[hidden]{display:none}
+.fxmenu button{position:relative;overflow:hidden;border:0;background:#f1ece4;color:var(--ink);border-radius:10px;padding:9px 10px;font:inherit;text-align:left;cursor:pointer;transition:transform .15s cubic-bezier(.3,1.6,.5,1),background .15s}
+.fxmenu button:hover{transform:scale(1.05);background:#e6dfd3}
+.fxmenu button:active{transform:scale(.93)}
+.fxmenu button.on{background:var(--ink);color:#fff}
+@media (max-width:420px){.fxmenu{left:10px;right:10px;min-width:0}}
+.fxmenu{display:block;width:min(450px,calc(100vw - 40px));min-width:0}
+.fxcats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.fxcats button{padding:5px 12px;border-radius:999px;font-size:.85rem}
+.fxgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-height:220px;overflow:auto}
+.fxgrid button sup{font-size:.65rem;opacity:.8}
+.fxfoot{display:flex;align-items:center;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid #0002}
+.fxfoot button{padding:6px 10px;font-size:.85rem;text-align:center}
+#fxchain{flex:1;min-width:0;font-size:.78rem;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ghost.has{background:#fff3}
+@media (max-width:420px){.fxgrid{grid-template-columns:repeat(2,1fr)}.fxfoot{flex-wrap:wrap}#fxchain{flex-basis:100%}}
+</style><script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script></head><body><div class="wrap" data-fmt="opus">
+<div class="panel">
+ <div class="top"><h1 id="h1">Silence</h1><button class="ghost" id="fx" title="Change how the sound sounds">Effects</button><div class="fxmenu" id="fxm" hidden></div></div>
+ <div class="tabs" id="tabs">
+  <button class="pill on" data-f="opus">Opus (.ogg)</button><button class="pill" data-f="mp3">MP3</button><button class="pill" data-f="wav">WAV</button>
+ </div>
+ <div class="tabs q" id="quals"></div>
+ <div class="ban"><div class="wave" id="wave" aria-hidden="true"></div>
+  <h2 id="ttl">1 Hour of Silence</h2><div class="h" id="sub">@Pollinated</div><hr>
+  <p id="desc">Upload your own sound below and pick a file type above. The first interruption lands in the first 5 seconds, the rest are spread across the hour.</p>
+  <button class="cta" id="go">GENERATE <span>→</span></button>
+ </div>
+ <div class="body">
+  <div class="info" id="info"></div>
+  <h3>INTERRUPTIONS</h3>
+  <div class="ctl"><input type="number" id="nn" min="1" value="6"><input type="range" id="n" min="1" max="200" value="6"></div>
+  <div class="chips" id="chips"><button data-c="1">1</button><button data-c="5">5</button><button data-c="10">10</button><button data-c="50">50</button><button data-c="100">100</button><button data-c="99999">Max</button></div>
+  <div class="note">Type any number. It is capped only if that many sounds can't physically fit in one hour.</div>
+  <h3 style="margin-top:16px">LENGTH</h3>
+  <div class="chips" id="lens"><button data-l="600">10 min</button><button data-l="1800">30 min</button><button class="on" data-l="3600">1 hour</button><button data-l="7200">2 hours</button></div>
+  <h3 style="margin-top:16px">SOUND VOLUME</h3>
+  <div class="ctl"><input type="range" id="vol" min="10" max="100" value="100"><b id="vv" style="width:48px;text-align:right">100%</b></div>
+  <h3 style="margin-top:16px">YOUR SOUND</h3><label class="file" for="file"><span id="fname">Choose an audio file…</span><b>Browse</b></label><input type="file" id="file" accept="audio/*">
+  <progress id="p" value="0" max="1" hidden></progress>
+  <div id="out"></div>
+  <canvas id="tl" hidden></canvas>
+ </div>
+</div>
+<div class="bar"><button class="on" id="pre2">▶ Preview</button><a class="off" id="dl" download="1-hour-of-silence.ogg">⬇ Download</a></div>
+</div>
+<script>
+let SR=16000,FD=60000,FS=960;let DUR=3600,running=false,cancel=false;
+const $=id=>document.getElementById(id);
+let fmt='opus';
+const CLICK=new Audio('data:audio/mpeg;base64,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VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/+xBk3Y/wAAB/gAAACAAAD/AAAAEAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/7EGTdj/AAAGkAAAAIAAANIAAAAQAAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//sQZN2P8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/+xBk3Y/wAABpAAAACAAADSAAAAEAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/7EGTdj/AAAGkAAAAIAAANIAAAAQAAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV');
+document.addEventListener('click',e=>{if(e.target.closest('button,a,.pill,.file')){try{const a=CLICK.cloneNode();a.play().catch(()=>{})}catch(_){}}},true);
+$('tabs').onclick=e=>{const b=e.target.closest('.pill');if(!b)return;document.querySelectorAll('.pill').forEach(x=>x.classList.remove('on'));b.classList.add('on');fmt=b.dataset.f};
+$('n').oninput=e=>$('nn').value=e.target.value;
+$('nn').oninput=e=>{if(+e.target.value<=200)$('n').value=e.target.value};
+async function getSound(){
+ const f=$('file').files[0];if(!f)throw new Error('Choose an audio file first.');
+ const buf=await new AudioContext().decodeAudioData(await f.arrayBuffer());
+ const oc=new OfflineAudioContext(1,Math.ceil(Math.min(buf.duration,10)*SR),SR),s=oc.createBufferSource();
+ s.buffer=buf;s.connect(oc.destination);s.start();
+ let d=applyFx((await oc.startRendering()).getChannelData(0).slice());let pk=0;for(const x of d)pk=Math.max(pk,Math.abs(x));
+ const g=(pk>0?.9/pk:1)*(+$('vol').value/100),fd=Math.min(d.length>>1,Math.round(SR*.008));
+ for(let i=0;i<d.length;i++){let m=g;if(i<fd)m*=i/fd;else if(d.length-i<fd)m*=(d.length-i)/fd;d[i]*=m}
+ return d;
+}
+const preview=async()=>{try{SR=48000;const d=await getSound(),c=new AudioContext(),b=c.createBuffer(1,d.length,SR);b.copyToChannel(d,0);const s=c.createBufferSource();s.buffer=b;s.connect(c.destination);s.start()}catch(e){$('out').textContent=e.message}};
+$('pre2').onclick=preview;
+const crcT=new Uint32Array(256).map((_,i)=>{let r=i<<24;for(let k=0;k<8;k++)r=r&0x80000000?(r<<1)^0x04c11db7:r<<1;return r>>>0});
+const crc=b=>{let c=0;for(const x of b)c=((c<<8)^crcT[((c>>>24)^x)&255])>>>0;return c};
+function page(pk,gran,flag,seq){
+ const segs=[];pk.forEach(p=>{let l=p.length;while(l>=255){segs.push(255);l-=255}segs.push(l)});
+ const body=pk.reduce((a,p)=>a+p.length,0),o=new Uint8Array(27+segs.length+body),v=new DataView(o.buffer);
+ o.set([79,103,103,83,0,flag]);v.setBigUint64(6,BigInt(gran),true);v.setUint32(14,0x51ce,true);v.setUint32(18,seq,true);
+ o[26]=segs.length;o.set(segs,27);let p=27+segs.length;pk.forEach(x=>{o.set(x,p);p+=x.length});
+ v.setUint32(22,crc(o),true);return o;
+}
+$('go').onclick=async()=>{
+ if(running){cancel=true;return}
+ const out=$('out'),btn=$('go'),prog=$('p'),dl=$('dl');out.textContent='';
+ let cfg=null;
+ if(fmt==='opus'){
+  if(!window.AudioEncoder){out.textContent='This browser has no WebCodecs audio encoder. Try Chrome, Edge or a recent Firefox, or use MP3 or WAV.';return}
+  const cands=[];
+  for(const sr of [48000,24000,16000])for(const br of [64000,32000,16000]){
+   cands.push({sr,fd:60000,c:{codec:'opus',sampleRate:sr,numberOfChannels:1,bitrate:br,opus:{frameDuration:60000}}});
+   cands.push({sr,fd:20000,c:{codec:'opus',sampleRate:sr,numberOfChannels:1,bitrate:br}});
+  }
+  {const q=Q.opus[qual.opus];cands.unshift({sr:q.sr,fd:20000,c:{codec:'opus',sampleRate:q.sr,numberOfChannels:1,bitrate:q.br}});cands.unshift({sr:q.sr,fd:60000,c:{codec:'opus',sampleRate:q.sr,numberOfChannels:1,bitrate:q.br,opus:{frameDuration:60000}}})}
+  for(const k of cands){try{const r=await AudioEncoder.isConfigSupported(k.c);if(r.supported){cfg=r.config||k.c;SR=k.sr;FD=k.fd;FS=SR*FD/1e6;break}}catch(e){}}
+  if(!cfg){out.textContent='This browser cannot encode Opus audio. Try MP3 or WAV.';return}
+ }else if(fmt==='mp3'){
+  if(!window.lamejs){out.textContent='The MP3 encoder could not load. Try Opus or WAV.';return}
+  SR=Q.mp3[qual.mp3].sr;
+ }else SR=Q.wav[qual.wav].sr;
+ let snd;try{snd=await getSound()}catch(e){out.textContent=e.message;warn();return}
+ running=true;cancel=false;btn.classList.add('busy');btn.firstChild.textContent='CANCEL ';btn.lastElementChild.textContent='✕';prog.hidden=false;prog.value=0;dl.classList.add('off');
+ await new Promise(r=>setTimeout(r,30));
+ const t0=performance.now(),total=DUR*SR,L=snd.length;
+ let n=Math.max(1,Math.floor(+$('nn').value)||1);
+ const first=Math.floor(Math.random()*Math.max(1,Math.min(5*SR,total-L)));
+ const s0=5*SR+L,R=total-s0,maxN=1+Math.max(0,Math.floor(R/L));
+ let note='';if(n>maxN){note=` (capped from ${n}: that is the most a ${(L/SR).toFixed(1)} s sound can fit in an hour)`;n=maxN}
+ const starts=[first];
+ if(n>1){const w=R/(n-1);for(let i=0;i<n-1;i++)starts.push(Math.floor(s0+i*w+Math.random()*Math.max(0,w-L)))}
+ let blob,ext;
+ try{
+  if(fmt==='wav'){
+   const bits=Q.wav[qual.wav].bits,bp=bits/8,u=new Uint8Array(44+total*bp).fill(bits===8?128:0),v=new DataView(u.buffer);
+   u.set([82,73,70,70]);v.setUint32(4,36+total*bp,true);u.set([87,65,86,69,102,109,116,32],8);
+   v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,SR,true);v.setUint32(28,SR*bp,true);v.setUint16(32,bp,true);v.setUint16(34,bits,true);
+   u.set([100,97,116,97],36);v.setUint32(40,total*bp,true);
+   for(const s of starts)for(let i=0;i<L&&s+i<total;i++){if(bits===8)u[44+s+i]=Math.max(0,Math.min(255,128+Math.round(snd[i]*127)));else v.setInt16(44+(s+i)*2,Math.max(-32768,Math.min(32767,Math.round(snd[i]*32767))),true)}
+   blob=new Blob([u],{type:'audio/wav'});ext='wav';
+  }else if(fmt==='mp3'){
+   const e=new lamejs.Mp3Encoder(1,SR,Q.mp3[qual.mp3].br),parts=[],B=1152,zero=new Int16Array(B);let ev=0;
+   for(let a=0,f=0;a<total;a+=B,f++){
+    const m=Math.min(B,total-a);let buf=zero;
+    while(ev<n&&starts[ev]+L<=a)ev++;
+    for(let k=ev;k<n&&starts[k]<a+m;k++){
+     if(buf===zero)buf=new Int16Array(B);
+     for(let i=Math.max(a,starts[k]);i<Math.min(a+m,starts[k]+L);i++)buf[i-a]=Math.max(-32768,Math.min(32767,Math.round(snd[i-starts[k]]*32767)));
+    }
+    const d=e.encodeBuffer(buf);if(d.length)parts.push(new Uint8Array(d));
+    if(f%500===0){if(cancel)throw new Error('cancelled');prog.value=a/total;await new Promise(r=>setTimeout(r,0))}
+   }
+   const d=e.flush();if(d.length)parts.push(new Uint8Array(d));
+   blob=new Blob(parts,{type:'audio/mpeg'});ext='mp3';
+  }else{
+   const chunks=[];
+   const enc=new AudioEncoder({output:c=>{const b=new Uint8Array(c.byteLength);c.copyTo(b);chunks.push({b,d:c.duration})},error:e=>console.error(e)});
+   enc.configure(cfg);
+   const zero=new Float32Array(FS);let ev=0,frames=total/FS|0;
+   for(let f=0;f<frames;f++){
+    const a=f*FS,b=a+FS;let buf=zero;
+    while(ev<n&&starts[ev]+L<=a)ev++;
+    for(let k=ev;k<n&&starts[k]<b;k++){
+     if(buf===zero)buf=new Float32Array(FS);
+     for(let i=Math.max(a,starts[k]);i<Math.min(b,starts[k]+L);i++)buf[i-a]+=snd[i-starts[k]];
+    }
+    enc.encode(new AudioData({format:'f32',sampleRate:SR,numberOfFrames:FS,numberOfChannels:1,timestamp:Math.round(f*FD),data:buf}));
+    if(f%300===0){if(cancel)throw new Error('cancelled');prog.value=f/frames;while(enc.encodeQueueSize>100)await new Promise(r=>setTimeout(r,0));await new Promise(r=>setTimeout(r,0))}
+   }
+   await enc.flush();enc.close();
+   const te=new TextEncoder(),pre=312,head=new Uint8Array(19),hv=new DataView(head.buffer);
+   head.set(te.encode('OpusHead'));head[8]=1;head[9]=1;hv.setUint16(10,pre,true);hv.setUint32(12,SR,true);
+   const tags=new Uint8Array([...te.encode('OpusTags'),6,0,0,0,...te.encode('silenc'),0,0,0,0]);
+   const parts=[page([head],0,2,0),page([tags],0,0,1)];
+   let seq=2,grp=[],gr=pre,segs=0;
+   chunks.forEach((c,i)=>{
+    const s=Math.floor(c.b.length/255)+1;
+    if(segs+s>250){parts.push(page(grp,gr,0,seq++));grp=[];segs=0}
+    grp.push(c.b);segs+=s;gr+=Math.round(c.d*48/1000);
+    if(i===chunks.length-1)parts.push(page(grp,gr,4,seq++));
+   });
+   blob=new Blob(parts,{type:'audio/ogg'});ext='ogg';
+  }
+ }catch(e){out.textContent=e.message==='cancelled'?'Cancelled.':'Encoding failed: '+e.message;fin();prog.hidden=true;return}
+ const url=URL.createObjectURL(blob),secs=((performance.now()-t0)/1000).toFixed(2);
+ prog.value=1;
+ const sz=blob.size>1048576?(blob.size/1048576).toFixed(1)+' MB':(blob.size/1024).toFixed(0)+' KB';
+ out.innerHTML=`<div class="stats"><div><small>Generated in</small><b>${secs} s</b></div><div><small>File size</small><b>${sz}</b></div><div><small>First sound at</small><b>${(first/SR).toFixed(1)} s</b></div><div><small>Interruptions</small><b>${n}</b></div></div><div class="fm">${ext.toUpperCase()} ${Q[fmt][qual[fmt]].n} · ${(SR/1000).toFixed(SR%1000?2:0)} kHz mono${note}</div><audio controls src="${url}"></audio>`;
+ dl.href=url;dl.download='silence-'+(DUR/60)+'min.'+ext;dl.classList.remove('off');fin();drawTL(starts,L,total);
+};
+
+document.addEventListener('click',e=>{const b=e.target.closest('.pill,.ghost,.cta,.bar button,.bar a,.chips button,.fxmenu button');if(!b)return;b.classList.add('rip');const r=b.getBoundingClientRect(),s=Math.max(r.width,r.height)*2,i=document.createElement('i');i.style.cssText=`width:${s}px;height:${s}px;left:${e.clientX-r.left-s/2}px;top:${e.clientY-r.top-s/2}px`;b.appendChild(i);setTimeout(()=>i.remove(),600)});
+
+(()=>{const w=document.getElementById('wave');for(let i=0;i<26;i++){const b=document.createElement('b');if([4,11,19].includes(i)){b.className='s';b.style.setProperty('--h',(60+Math.random()*80)+'px');b.style.animationDelay=(i*.35)+'s'}w.appendChild(b)}
+document.getElementById('file').onchange=e=>{document.getElementById('fname').textContent=e.target.files[0]?e.target.files[0].name:'Choose an audio file…'}})();
+
+const warn=()=>{const f=document.querySelector('.file');f.classList.remove('shake');void f.offsetWidth;f.classList.add('shake')};
+const fin=()=>{running=false;const b=$('go');b.classList.remove('busy');b.firstChild.textContent='GENERATE ';b.lastElementChild.textContent='→'};
+const LN={600:'10 Minutes',1800:'30 Minutes',3600:'1 Hour',7200:'2 Hours'};
+let fxs=[],fxCat='Voice';
+const ip=(a,p)=>{const i=Math.floor(p);if(i<0||i>=a.length-1)return 0;const f=p-i;return a[i]*(1-f)+a[i+1]*f};
+const spd=(d,r)=>{const o=new Float32Array(Math.max(1,Math.floor(d.length/r)));for(let i=0;i<o.length;i++)o[i]=ip(d,i*r);return o};
+const lpf=(d,fc)=>{const a=1-Math.exp(-6.283*fc/SR);let y=0;return d.map(x=>y+=a*(x-y))};
+const hpf=(d,fc)=>{const l=lpf(d,fc);return d.map((x,i)=>x-l[i])};
+const ring=(d,f)=>d.map((x,i)=>x*Math.sin(6.283*f*i/SR));
+const vib=(d,r,dp)=>d.map((_,i)=>ip(d,i-SR*dp*(1+Math.sin(6.283*r*i/SR))));
+const trem=(d,r,dp)=>d.map((x,i)=>x*(1-dp+dp*(.5+.5*Math.sin(6.283*r*i/SR))));
+const sat=(d,k)=>d.map(x=>Math.tanh(x*k));
+const crushF=(d,h,lv)=>d.map((_,i)=>Math.round(d[i-i%h]*lv)/lv);
+const echoF=(d,t,fb,n)=>{const s=Math.floor(SR*t),o=new Float32Array(d.length+s*n);for(let r=0;r<=n;r++)for(let i=0;i<d.length;i++)o[i+r*s]+=d[i]*Math.pow(fb,r);return o};
+const revF=(d,sc)=>{const tl=[.0297,.0371,.0411,.0437].map(x=>Math.floor(x*SR*sc)),n=d.length+Math.floor(SR*.6*sc),o=new Float32Array(n);
+ for(const L of tl){const b=new Float32Array(n);for(let i=0;i<n;i++){b[i]=(i<d.length?d[i]:0)+(i>=L?.78*b[i-L]:0);o[i]+=b[i]*.25}}return o};
+const cat=a=>{const o=new Float32Array(a.reduce((s,x)=>s+x.length,0));let p=0;for(const x of a){o.set(x,p);p+=x.length}return o};
+const sweep=(d,a,b)=>{const o=[],n=d.length;let p=0;while(p<n-1&&o.length<12*SR){o.push(ip(d,p));p+=a+(b-a)*(p/n)}return Float32Array.from(o)};
+const FXS={
+ higher:['Higher','Pitch',d=>spd(d,1.25)],lower:['Lower','Pitch',d=>spd(d,.8)],chipmunk:['Chipmunk','Pitch',d=>spd(d,1.6)],
+ tiny:['Tiny','Pitch',d=>spd(d,2.3)],deep:['Deep','Pitch',d=>spd(d,.65)],giant:['Giant','Pitch',d=>spd(d,.45)],
+ robot:['Robot','Voice',d=>{const o=new Float32Array(d.length),k=Math.round(SR*.006);for(let i=0;i<o.length;i++)o[i]=d[i]*Math.sin(6.283*55*i/SR)*1.4+(i>=k?.6*o[i-k]:0);return o}],
+ alien:['Alien','Voice',d=>vib(d,7,.004).map((x,i)=>x*(.55+.45*Math.sin(6.283*300*i/SR)))],
+ demon:['Demon','Voice',d=>sat(spd(d,.6).map((x,i)=>x*(1+.6*Math.sin(6.283*30*i/SR))),3)],
+ cartoon:['Cartoon','Voice',d=>spd(vib(d,9,.002),1.35)],
+ whisper:['Whisper','Voice',d=>lpf(d.map(Math.abs),80).map(x=>x*(Math.random()*2-1)*3)],
+ megaphone:['Megaphone','Voice',d=>sat(hpf(lpf(d,3200),500),4)],
+ underwater:['Underwater','Voice',d=>lpf(vib(d,3,.003),700)],
+ echo:['Echo','Space',d=>echoF(d,.2,.55,4)],longecho:['Long Echo','Space',d=>echoF(d,.4,.65,6)],slap:['Slapback','Space',d=>echoF(d,.09,.5,1)],
+ room:['Room','Space',d=>revF(d,1)],hall:['Hall','Space',d=>revF(d,2)],cave:['Cave','Space',d=>lpf(revF(d,3.2),3000)],
+ overdrive:['Overdrive','Distortion',d=>sat(d,4)],distort:['Distort','Distortion',d=>sat(d,14)],fuzz:['Fuzz','Distortion',d=>d.map(x=>Math.max(-.05,Math.min(.05,x))*18)],
+ bit8:['8-bit','Distortion',d=>crushF(d,Math.max(2,Math.round(SR/4000)),64)],crunch:['Crunch','Distortion',d=>crushF(d,Math.max(2,Math.round(SR/2000)),8)],
+ lofi:['Lo-fi','Distortion',d=>crushF(lpf(d,3000),4,32)],
+ tremolo:['Tremolo','Modulation',d=>trem(d,6,.8)],vibrato:['Vibrato','Modulation',d=>vib(d,6,.0012)],wobble:['Wobble','Modulation',d=>vib(d,2.5,.006)],
+ flanger:['Flanger','Modulation',d=>d.map((x,i)=>(x+ip(d,i-SR*.003*(1+Math.sin(6.283*2*i/SR))))*.6)],
+ chorus:['Chorus','Modulation',d=>d.map((x,i)=>(x+ip(d,i-SR*(.02+.004*Math.sin(6.283*1.5*i/SR)))+ip(d,i-SR*(.03+.005*Math.sin(6.283*1.1*i/SR))))/2.2)],
+ metallic:['Metallic','Modulation',d=>ring(d,440)],heli:['Helicopter','Modulation',d=>trem(d,14,1)],
+ muffled:['Muffled','Filter',d=>lpf(d,500)],thin:['Thin','Filter',d=>hpf(d,1800)],bass:['Bass Boost','Filter',d=>{const l=lpf(d,200);return d.map((x,i)=>x+3*l[i])}],
+ radio:['Radio','Filter',d=>sat(hpf(lpf(d,3500),450),2)],phone:['Telephone','Filter',d=>sat(hpf(lpf(d,3000),300),1.6)],
+ reverse:['Reverse','Time',d=>d.slice().reverse()],
+ stutter:['Stutter','Time',d=>{const z=Math.floor(SR*.07),a=[];for(let j=0;j*z<d.length;j++){const c=d.subarray(j*z,(j+1)*z);for(let r=0;r<(j%3===0?3:1);r++)a.push(c)}return cat(a)}],
+ chop:['Chop','Time',d=>d.map((x,i)=>x*(Math.floor(i/(SR*.04))%2?0:1))],
+ dive:['Dive','Time',d=>sweep(d,1.8,.5)],rise:['Rise','Time',d=>sweep(d,.5,1.8)]
+};
+const FCATS=['Voice','Pitch','Space','Distortion','Modulation','Filter','Time'];
+function renderFx(){
+ const m=$('fxm'),n=k=>fxs.filter(x=>FXS[x][1]===k).length;
+ m.innerHTML=`<div class="fxcats">${FCATS.map(c=>`<button data-cat="${c}" class="${c===fxCat?'on':''}">${c}${n(c)?' ('+n(c)+')':''}</button>`).join('')}</div>
+ <div class="fxgrid">${Object.keys(FXS).filter(k=>FXS[k][1]===fxCat).map(k=>`<button data-k="${k}" class="${fxs.includes(k)?'on':''}">${FXS[k][0]}${fxs.includes(k)?' <sup>'+(fxs.indexOf(k)+1)+'</sup>':''}</button>`).join('')}</div>
+ <div class="fxfoot"><span id="fxchain">${fxs.length?fxs.map(k=>FXS[k][0]).join(' → '):'No effects'}</span><button data-a="prev">Preview</button><button data-a="clr">Clear</button><button data-a="done">Done</button></div>`;
+ $('fx').classList.toggle('has',fxs.length>0);
+}
+$('fx').onclick=e=>{e.stopPropagation();$('fxm').hidden=!$('fxm').hidden};
+$('fxm').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.cat)fxCat=b.dataset.cat;
+ else if(b.dataset.k){const i=fxs.indexOf(b.dataset.k);if(i<0)fxs.push(b.dataset.k);else fxs.splice(i,1);save()}
+ else if(b.dataset.a==='clr'){fxs=[];save()}
+ else if(b.dataset.a==='done'){$('fxm').hidden=true;return}
+ else if(b.dataset.a==='prev'){preview();return}
+ renderFx()};
+document.addEventListener('click',e=>{if(!e.composedPath().includes($('fxm')))$('fxm').hidden=true});
+function applyFx(d){let o=d;for(const k of fxs){try{const r=FXS[k][2](o);if(r&&r.length)o=r.length>12*SR?r.slice(0,12*SR):r}catch(_){}}return o}
+const Q={
+ opus:[{n:'Low',sr:16000,br:12000},{n:'Medium',sr:24000,br:24000},{n:'High',sr:48000,br:64000},{n:'Best',sr:48000,br:128000}],
+ mp3:[{n:'Low',sr:22050,br:32},{n:'Medium',sr:32000,br:48},{n:'High',sr:44100,br:64},{n:'Best',sr:44100,br:128}],
+ wav:[{n:'Low',sr:8000,bits:8},{n:'Medium',sr:11025,bits:16},{n:'High',sr:16000,bits:16},{n:'Best',sr:22050,bits:16}]};
+const qual={opus:2,mp3:2,wav:1};
+const sizeOf=(f,q)=>{if(f==='opus')return DUR>=3600?'≈ 1 MB or less':'< 1 MB';const b=f==='mp3'?q.br*125*DUR:q.sr*q.bits/8*DUR;return '≈ '+(b>=1e6?Math.round(b/1e6)+' MB':Math.round(b/1e3)+' KB')};
+const qTxt=q=>`${q.n}<small>${(q.sr/1000)} kHz${q.bits?' · '+q.bits+'-bit':q.br>999?' · '+q.br/1000+'k':' · '+q.br+'k'} · ${sizeOf(fmt,q)}</small>`;
+function renderQ(){const el=$('quals');
+ if(el.dataset.f!==fmt){el.dataset.f=fmt;el.innerHTML=Q[fmt].map((q,i)=>`<button class="pill" data-q="${i}"></button>`).join('')}
+ [...el.children].forEach((b,i)=>{const h=qTxt(Q[fmt][i]);if(b.dataset.h!==h){b.innerHTML=h;b.dataset.h=h}b.classList.toggle('on',i===qual[fmt])})}
+const popIt=b=>{b.classList.add('pop');setTimeout(()=>b.classList.remove('pop'),450)};
+function markC(){document.querySelectorAll('#chips button').forEach(b=>b.classList.toggle('on',b.dataset.c===$('nn').value))}
+$('quals').onclick=e=>{const b=e.target.closest('.pill');if(!b)return;qual[fmt]=+b.dataset.q;renderQ();popIt(b);save()};
+const INFO={
+ opus:{l:'Opus (.ogg)',s:'The smallest file',d:'Tiny files that still sound great. Silence costs almost nothing, so a full hour fits in about a megabyte.',b:'Smallest possible download',w:'Chrome, Firefox, Edge, VLC, Discord, most Android phones. Older iPhones may not play .ogg.'},
+ mp3:{l:'MP3',s:'Plays everywhere',d:'Works on practically any device or app, but MP3 can’t shrink silence, so files are much bigger than Opus.',b:'Maximum compatibility',w:'Every phone, car stereo, browser and media player.'},
+ wav:{l:'WAV',s:'Uncompressed',d:'Raw, lossless audio you can drop straight into an editor. By far the biggest files.',b:'Editing in DAWs and video editors',w:'Every operating system and editing program.'}};
+function applyFmt(anim){
+ const w=document.querySelector('.wrap'),i=INFO[fmt];w.dataset.fmt=fmt;document.body.dataset.fmt=fmt;
+ $('h1').textContent='Silence · '+i.l;$('sub').textContent='@Pollinated · '+i.s;
+ $('desc').textContent=i.d+' The first interruption lands in the first 5 seconds.';
+ $('info').innerHTML=`<div><b>Best for</b>${i.b}</div><div><b>Works with</b>${i.w}</div>`;
+ renderQ();
+ if(window._tl&&!$('tl').hidden)drawTL(...window._tl);
+ if(anim){const pn=document.querySelector('.panel');pn.classList.remove('swap');void pn.offsetWidth;pn.classList.add('swap')}
+}
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('.pill');if(b)popIt(b);applyFmt(true)});
+$('nn').addEventListener('input',markC);$('n').addEventListener('input',markC);
+const save=()=>{try{localStorage.setItem('se',JSON.stringify({fxs,fmt,qual,n:$('nn').value,len:DUR,vol:$('vol').value}))}catch(_){}};
+function setFmt(f){fmt=f;applyFmt(false);document.querySelectorAll('.pill').forEach(x=>x.classList.toggle('on',x.dataset.f===f))}
+function setLen(s){DUR=s;document.querySelectorAll('#lens button').forEach(x=>x.classList.toggle('on',+x.dataset.l===s));$('ttl').textContent=LN[s]+' of Silence';renderQ()}
+function setCount(v){$('nn').value=v;$('n').value=Math.min(200,v);markC()}
+$('chips').onclick=e=>{const b=e.target.closest('button');if(b){setCount(b.dataset.c);popIt(b);save()}};
+$('lens').onclick=e=>{const b=e.target.closest('button');if(b){setLen(+b.dataset.l);popIt(b);save()}};
+$('vol').oninput=e=>{$('vv').textContent=e.target.value+'%';save()};
+$('tabs').addEventListener('click',save);$('nn').addEventListener('input',save);$('n').addEventListener('input',save);
+try{const s=JSON.parse(localStorage.getItem('se')||'null');if(s){if(Array.isArray(s.fxs))fxs=s.fxs.filter(k=>FXS[k]);if(s.qual)Object.assign(qual,s.qual);setFmt(s.fmt||'opus');setCount(s.n||6);setLen(+s.len||3600);$('vol').value=s.vol||100;$('vv').textContent=$('vol').value+'%'}}catch(_){}
+applyFmt(false);markC();renderFx();
+const fl=document.querySelector('.file');
+['dragenter','dragover'].forEach(v=>document.addEventListener(v,e=>{e.preventDefault();fl.classList.add('drag')}));
+['dragleave','drop'].forEach(v=>document.addEventListener(v,e=>{e.preventDefault();fl.classList.remove('drag')}));
+document.addEventListener('drop',e=>{const f=e.dataTransfer&&e.dataTransfer.files;if(f&&f.length){$('file').files=f;$('file').dispatchEvent(new Event('change'))}});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!/^(BUTTON|A|INPUT)$/.test(e.target.tagName))$('go').click()});
+function drawTL(st,L,total){window._tl=[st,L,total];
+ const c=$('tl'),d=devicePixelRatio||1;c.hidden=false;c.width=c.clientWidth*d;c.height=44*d;const x=c.getContext('2d'),W=c.width,H=c.height;
+ x.fillStyle='#b9b2d6';x.fillRect(0,H*.55,W,3*d);
+ x.fillStyle=getComputedStyle(c).getPropertyValue('--tl').trim()||'#e6672a';st.forEach(s=>{x.fillRect(s/total*W,H*.15,Math.max(2*d,L/total*W),H*.5)});
+ x.fillStyle='#4a4d85';x.font=11*d+'px sans-serif';x.fillText('0:00',0,H-4*d);const e=fmtT(total/(total/DUR));x.textAlign='right';x.fillText(e,W,H-4*d);
+ c.onclick=ev=>{const a=$('out').querySelector('audio');if(a){a.currentTime=(ev.offsetX/c.clientWidth)*DUR;a.play()}};
+ c.title='Click to jump to that point';
+}
+const fmtT=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
+</script></body></html>
